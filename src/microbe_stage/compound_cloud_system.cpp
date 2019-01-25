@@ -41,14 +41,17 @@ CompoundCloudComponent::CompoundCloudComponent(CompoundCloudSystem& owner,
     m_textureName("cloud_" + std::to_string(++CloudTextureNumber)),
     m_owner(owner)
 {
+    LOG_INFO("got here");
     if(!first)
         throw std::runtime_error(
             "CompoundCloudComponent needs at least one Compound type");
 
     // Read data
-    m_compoundId1 = first->id;
     m_color1 =
         Ogre::Vector4(first->colour.r, first->colour.g, first->colour.b, 1.0f);
+    m_compoundId1 = first->id;
+    LOG_INFO("cloud colors are " + std::to_string(first->colour.r));
+    LOG_INFO("cloud first compound ID is " + std::to_string(m_compoundId1));
 
     if(second) {
 
@@ -836,12 +839,6 @@ void
                     if(((pos - requiredPos).HAddAbs() < Leviathan::EPSILON) &&
                         (m_cloudTypes[c].id ==
                             iter->second->getCompoundId1())) {
-                        LOG_INFO(
-                            "Clouds were at same position Compound ID:" +
-                            std::to_string(m_cloudTypes[c].id) +
-                            " Opposing ID:" +
-                            std::to_string(iter->second->getCompoundId1()));
-                        LOG_INFO(m_cloudTypes[c].displayName);
                         hasCloud = true;
                         break;
                     }
@@ -873,7 +870,6 @@ void
         size_t startIndex)
 {
     auto entity = world.CreateEntity();
-
     Compound* first =
         startIndex < m_cloudTypes.size() ? &m_cloudTypes[startIndex] : nullptr;
 
@@ -888,14 +884,12 @@ void
     Compound* fourth = startIndex + 3 < m_cloudTypes.size() ?
                            &m_cloudTypes[startIndex + 3] :
                            nullptr;
-
     CompoundCloudComponent& cloud = world.Create_CompoundCloudComponent(
         entity, *this, first, second, third, fourth);
 
     // Set correct position
     // TODO: this should probably be made a constructor parameter
     cloud.m_position = pos;
-
     initializeCloud(cloud, world.GetScene());
     m_managedClouds[entity] = &cloud;
 }
@@ -905,6 +899,8 @@ void
     CompoundCloudSystem::initializeCloud(CompoundCloudComponent& cloud,
         Ogre::SceneManager* scene)
 {
+    LOG_INFO(
+        "cloud first compound ID is " + std::to_string(cloud.m_compoundId1));
     LOG_INFO("Initializing a new compound cloud entity");
 
     // All the densities
