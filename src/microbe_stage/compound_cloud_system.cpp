@@ -609,6 +609,13 @@ std::tuple<float, float>
     return std::make_tuple(localX, localY);
 }
 
+Float3
+    CompoundCloudSystem::calculateGridCenterForPlayerPos(const Float3& pos)
+{
+    return Float3((static_cast<int>(pos.X) / CLOUD_WIDTH) * CLOUD_WIDTH, 0,
+        (static_cast<int>(pos.Z) / CLOUD_HEIGHT) * CLOUD_HEIGHT);
+}
+
 // ------------------------------------ //
 void
     CompoundCloudSystem::Run(CellStageWorld& world)
@@ -689,27 +696,19 @@ void
                          ((((m_cloudTypes.size() + 4 - 1) / 4 * 4) / 4) * 9),
         "A CompoundCloud entity has mysteriously been destroyed");
 
-    const auto moved = playerPos - m_cloudGridCenter;
+    // Calculate what our center should be
+    const auto targetCenter = calculateGridCenterForPlayerPos(playerPos);
 
     // TODO: because we no longer check if the player has moved at least a bit
     // it is possible that this gets triggered very often if the player spins
-    // around a cloud edge, but hopefully there isn't a performance problem and
-    // that case can just be ignored.
-    // Z is used here because these are world coordinates
-    if(std::abs(moved.X) > CLOUD_WIDTH || std::abs(moved.Z) > CLOUD_HEIGHT) {
+    // around a cloud edge.
 
-        // Calculate the new center
-        if(moved.X < -CLOUD_WIDTH) {
-            m_cloudGridCenter -= Float3(CLOUD_WIDTH * 2, 0, 0);
-        } else if(moved.X > CLOUD_WIDTH) {
-            m_cloudGridCenter += Float3(CLOUD_WIDTH * 2, 0, 0);
-        }
+    // This needs an extra variable to track how much the player has moved
+    // auto moved = playerPos - m_cloudGridCenter;
 
-        if(moved.Z < -CLOUD_HEIGHT) {
-            m_cloudGridCenter -= Float3(0, 0, CLOUD_HEIGHT * 2);
-        } else if(moved.Z > CLOUD_HEIGHT) {
-            m_cloudGridCenter += Float3(0, 0, CLOUD_HEIGHT * 2);
-        }
+    if(m_cloudGridCenter != targetCenter) {
+
+        m_cloudGridCenter = targetCenter;
 
         // Calculate the new positions
         const auto requiredCloudPositions{
