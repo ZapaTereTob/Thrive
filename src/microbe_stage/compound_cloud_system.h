@@ -330,9 +330,6 @@ protected:
     //! \todo This can be removed once there is a proper clear method available
     //! for systems to detect
     CompoundCloudSystem& m_owner;
-
-    // //! A helper value to handle cloud repositioning
-    // bool m_repositioned = false;
 };
 
 
