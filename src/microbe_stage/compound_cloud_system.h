@@ -489,6 +489,12 @@ private:
     void
         doSpawnCycle(CellStageWorld& world, const Float3& playerPos);
 
+    //! \brief This method handles moving the clouds
+    //!
+    //! This has been separated from doSpawnCycle to be more manageable
+    void
+        applyNewCloudPositioning();
+
     void
         _spawnCloud(CellStageWorld& world,
             const Float3& pos,

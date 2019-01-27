@@ -161,25 +161,25 @@ TEST_CASE("CloudManager grid center calculation", "[microbe]")
               Float3(CLOUD_WIDTH - 1, 0, 0)) == Float3(0, 0, 0));
 
     CHECK(CompoundCloudSystem::calculateGridCenterForPlayerPos(
-              Float3(CLOUD_WIDTH, 0, 0)) == Float3(CLOUD_WIDTH, 0, 0));
+              Float3(CLOUD_WIDTH, 0, 0)) == Float3(CLOUD_X_EXTENT, 0, 0));
 
     CHECK(CompoundCloudSystem::calculateGridCenterForPlayerPos(
-              Float3(CLOUD_WIDTH + 1, 0, 0)) == Float3(CLOUD_WIDTH, 0, 0));
+              Float3(CLOUD_WIDTH + 1, 0, 0)) == Float3(CLOUD_X_EXTENT, 0, 0));
 
     CHECK(CompoundCloudSystem::calculateGridCenterForPlayerPos(
               Float3(CLOUD_WIDTH, 0, CLOUD_HEIGHT)) ==
-          Float3(CLOUD_WIDTH, 0, CLOUD_HEIGHT));
+          Float3(CLOUD_X_EXTENT, 0, CLOUD_Y_EXTENT));
 
     CHECK(CompoundCloudSystem::calculateGridCenterForPlayerPos(
               Float3(CLOUD_WIDTH, 0, CLOUD_HEIGHT * 2)) ==
-          Float3(CLOUD_WIDTH, 0, CLOUD_HEIGHT * 2));
+          Float3(CLOUD_X_EXTENT, 0, CLOUD_Y_EXTENT));
 
     CHECK(CompoundCloudSystem::calculateGridCenterForPlayerPos(
-              Float3(-CLOUD_WIDTH, 0, 0)) == Float3(-CLOUD_WIDTH, 0, 0));
+              Float3(-CLOUD_X_EXTENT, 0, 0)) == Float3(-CLOUD_Y_EXTENT, 0, 0));
 
     CHECK(CompoundCloudSystem::calculateGridCenterForPlayerPos(
               Float3(-CLOUD_WIDTH, 0, -CLOUD_HEIGHT)) ==
-          Float3(-CLOUD_WIDTH, 0, -CLOUD_HEIGHT));
+          Float3(-CLOUD_X_EXTENT, 0, -CLOUD_Y_EXTENT));
 
     CHECK(CompoundCloudSystem::calculateGridCenterForPlayerPos(Float3(
               -CLOUD_WIDTH + 1, 0, -CLOUD_HEIGHT + 1)) == Float3(0, 0, 0));
@@ -235,6 +235,17 @@ public:
         }
 
         return clouds;
+    }
+
+    void
+        movePlayerXUnits(float amount)
+    {
+        // Move player
+        playerPos->Members._Position.X += amount;
+        playerPos->Marked = true;
+
+        // And tick
+        world.Tick(1);
     }
 
 protected:
@@ -296,11 +307,14 @@ auto
     return counts;
 }
 
+template<size_t Count>
 void
     checkCloudsAtPos(
         const std::map<std::string, std::vector<CompoundId>>& counts,
-        const std::vector<CompoundId>& types)
+        const std::array<CompoundId, Count>& types)
 {
+    CAPTURE(types);
+
     for(const auto& pair : counts) {
         CAPTURE(pair.first);
         CAPTURE(pair.second);
@@ -321,20 +335,26 @@ void
             }
         }
 
+        CAPTURE(foundStatuses);
         for(bool found : foundStatuses)
             CHECK(found);
     }
 }
 
-template<class PosArrayT>
+template<size_t OverlappingCount, class PosArrayT>
 auto
     multiOverlapCloudPosCheck(
         const std::vector<CompoundCloudComponent*>& clouds,
         const PosArrayT& targetPositions,
-        const std::vector<Compound>& types)
+        const std::array<CompoundId, OverlappingCount>& cloudFirstTypes)
 {
-    std::vector<std::array<bool, 2>> valid;
-    valid.resize(targetPositions.size(), {false, false});
+    std::vector<std::array<bool, OverlappingCount>> valid;
+
+    std::array<bool, OverlappingCount> falseArray;
+    for(bool& entry : falseArray)
+        entry = false;
+
+    valid.resize(targetPositions.size(), falseArray);
 
     for(size_t i = 0; i < targetPositions.size(); ++i) {
 
@@ -346,40 +366,55 @@ auto
 
             if(cloud->getPosition() == pos) {
 
-                // First or second
-                CAPTURE(cloud->getCompoundId1(), pos);
-                CAPTURE((valid[i][0]));
-                CAPTURE((valid[i][1]));
-                if(cloud->getCompoundId1() == types[0].id) {
+                CAPTURE(cloud->getCompoundId1(), pos, cloudFirstTypes);
 
-                    // Make sure the rest of the cloud entries are also right
-                    CHECK(cloud->getCompoundId2() == types[1].id);
-                    CHECK(cloud->getCompoundId3() == types[2].id);
-                    CHECK(cloud->getCompoundId4() == types[3].id);
+                bool matched = false;
 
-                    // Position check
-                    CHECK(!valid[i][0]);
-                    valid[i][0] = true;
+                // Check which group it is
+                for(size_t targetTypeIndex = 0;
+                    targetTypeIndex < cloudFirstTypes.size();
+                    ++targetTypeIndex) {
 
-                } else if(cloud->getCompoundId1() == types[4].id) {
+                    if(cloud->getCompoundId1() ==
+                        cloudFirstTypes[targetTypeIndex]) {
 
-                    // Make sure the rest of the cloud entries are also right
-                    CHECK(cloud->getCompoundId2() == NULL_COMPOUND);
-                    CHECK(cloud->getCompoundId3() == NULL_COMPOUND);
-                    CHECK(cloud->getCompoundId4() == NULL_COMPOUND);
-
-                    // Position check
-                    CHECK(!valid[i][1]);
-                    valid[i][1] = true;
-
-                } else {
-                    FAIL_CHECK("cloud has unexpected id");
+                        // Position check
+                        CHECK(!valid[i][targetTypeIndex]);
+                        valid[i][targetTypeIndex] = true;
+                        matched = true;
+                        break;
+                    }
                 }
+
+                CHECK(matched);
             }
         }
     }
 
     return valid;
+}
+
+template<size_t OverlappingCount>
+void
+    multiCloudPositionCheckHelper(
+        const std::vector<CompoundCloudComponent*>& clouds,
+        const Float3& playerPos,
+        const std::array<CompoundId, OverlappingCount>& cloudFirstTypes)
+{
+    // There needs to be 2 clouds at each position
+    checkCloudsAtPos(calculateCloudsAtSamePos(clouds), cloudFirstTypes);
+
+    // And then check that update succeeded
+    const auto valid = multiOverlapCloudPosCheck(clouds,
+        CompoundCloudSystem::calculateGridPositions(
+            CompoundCloudSystem::calculateGridCenterForPlayerPos(playerPos)),
+        cloudFirstTypes);
+
+    for(const auto& entry : valid) {
+        CAPTURE(entry);
+        for(auto subentry : entry)
+            CHECK(subentry);
+    }
 }
 
 TEST_CASE_METHOD(CloudManagerTestsFixture,
@@ -416,6 +451,10 @@ TEST_CASE_METHOD(CloudManagerTestsFixture,
         Compound{4, "d", true, true, false, Ogre::ColourValue(9, 10, 11, 1)},
         Compound{5, "e", true, true, false, Ogre::ColourValue(12, 13, 14, 1)}};
 
+    std::array<CompoundId, 2> cloudFirstTypes;
+    cloudFirstTypes[0] = types[0].id;
+    cloudFirstTypes[1] = types[4].id;
+
     setCloudsAndRunInitial(types);
 
     // Find the cloud entities
@@ -423,14 +462,8 @@ TEST_CASE_METHOD(CloudManagerTestsFixture,
 
     CHECK(clouds.size() == 18);
 
-    // Check that cloud positioning has worked
-    const auto valid = multiOverlapCloudPosCheck(clouds,
-        CompoundCloudSystem::calculateGridPositions(Float3(0, 0, 0)), types);
-
-    for(const auto& entry : valid) {
-        CHECK(entry[0]);
-        CHECK(entry[1]);
-    }
+    multiCloudPositionCheckHelper(
+        clouds, playerPos->Members._Position, cloudFirstTypes);
 }
 
 
@@ -476,8 +509,6 @@ TEST_CASE_METHOD(CloudManagerTestsFixture,
     "Cloud manager repositions on player move clouds with 5 compound types",
     "[microbe]")
 {
-    constexpr auto PLAYER_MOVE_AMOUNT = 1000;
-
     // This test assumes
     static_assert(CLOUDS_IN_ONE == 4, "this test assumes this");
 
@@ -488,9 +519,9 @@ TEST_CASE_METHOD(CloudManagerTestsFixture,
         Compound{4, "d", true, true, false, Ogre::ColourValue(9, 10, 11, 1)},
         Compound{5, "e", true, true, false, Ogre::ColourValue(12, 13, 14, 1)}};
 
-    std::vector<CompoundId> cloudFirstTypes;
-    cloudFirstTypes.push_back(types[0].id);
-    cloudFirstTypes.push_back(types[4].id);
+    std::array<CompoundId, 2> cloudFirstTypes;
+    cloudFirstTypes[0] = types[0].id;
+    cloudFirstTypes[1] = types[4].id;
 
     setCloudsAndRunInitial(types);
 
@@ -499,37 +530,20 @@ TEST_CASE_METHOD(CloudManagerTestsFixture,
 
     CHECK(clouds.size() == 18);
 
-    // There needs to be 2 clouds at each position
-    checkCloudsAtPos(calculateCloudsAtSamePos(clouds), cloudFirstTypes);
+    multiCloudPositionCheckHelper(
+        clouds, playerPos->Members._Position, cloudFirstTypes);
 
-    // Check that cloud positioning has worked
-    auto valid = multiOverlapCloudPosCheck(clouds,
-        CompoundCloudSystem::calculateGridPositions(Float3(0, 0, 0)), types);
+    // SECTION("Moving CLOUD_WIDTH/2 units") {}
 
-    for(const auto& entry : valid) {
-        CHECK(entry[0]);
-        CHECK(entry[1]);
+    SECTION("Moving 1000 units")
+    {
+        constexpr auto PLAYER_MOVE_AMOUNT = 1000;
+
+        movePlayerXUnits(PLAYER_MOVE_AMOUNT);
+
+        multiCloudPositionCheckHelper(
+            clouds, playerPos->Members._Position, cloudFirstTypes);
     }
 
-    // Move player
-    playerPos->Members._Position.X += PLAYER_MOVE_AMOUNT;
-    playerPos->Marked = true;
-
-    // And tick
-    world.Tick(1);
-
-    // There needs to be 2 clouds at each position
-    checkCloudsAtPos(calculateCloudsAtSamePos(clouds), cloudFirstTypes);
-
-    // And then check that update succeeded
-    valid = multiOverlapCloudPosCheck(clouds,
-        CompoundCloudSystem::calculateGridPositions(
-            CompoundCloudSystem::calculateGridCenterForPlayerPos(
-                Float3(PLAYER_MOVE_AMOUNT, 0, 0))),
-        types);
-
-    for(const auto& entry : valid) {
-        CHECK(entry[0]);
-        CHECK(entry[1]);
-    }
+    // SECTION("Moving CLOUD_WIDTH * 1.5 units") {}
 }
