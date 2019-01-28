@@ -79,16 +79,24 @@ public:
 
             LOG_INFO("Destroying background item");
 
-            if(m_cellStage)
+            if(m_cellStage) {
+                m_microbeBackgroundItem->detachFromParent();
                 m_cellStage->GetScene()->destroyItem(m_microbeBackgroundItem);
+			}
+
+            m_microbeBackgroundItem->_deinitialise();
             m_microbeBackgroundItem = nullptr;
         }
 
         if(m_microbeEditorBackgroundItem) {
 
-            if(m_microbeEditor)
+            if(m_microbeEditor){
+                m_microbeEditorBackgroundItem->detachFromParent();
                 m_microbeEditor->GetScene()->destroyItem(
                     m_microbeEditorBackgroundItem);
+			}
+
+            m_microbeEditorBackgroundItem->_deinitialise();
             m_microbeEditorBackgroundItem = nullptr;
         }
     }
