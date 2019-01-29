@@ -268,7 +268,7 @@ const dictionary DEFAULT_INITIAL_COMPOUNDS_IRON =
         {"phosphates", InitialCompound(0)},
         {"hydrogensulfide", InitialCompound(0)},
         {"oxytoxy", InitialCompound(0)},
-        {"glucose", InitialCompound(30,300)}
+        {"iron", InitialCompound(30,300)}
     };
 
 string randomSpeciesName()
