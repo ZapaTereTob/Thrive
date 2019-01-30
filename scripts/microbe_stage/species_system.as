@@ -247,6 +247,7 @@ string generateNameSection()
     return newName;
 }
 
+// For normal microbes
 const dictionary DEFAULT_INITIAL_COMPOUNDS =
     {
         {"atp", InitialCompound(30,300)},
@@ -254,7 +255,20 @@ const dictionary DEFAULT_INITIAL_COMPOUNDS =
         {"ammonia", InitialCompound(30,100)},
         {"phosphates", InitialCompound(0)},
         {"hydrogensulfide", InitialCompound(0)},
-        {"oxytoxy", InitialCompound(0)}
+        {"oxytoxy", InitialCompound(0)},
+        {"iron", InitialCompound(0)}
+    };
+
+// For iron phillic microbes
+const dictionary DEFAULT_INITIAL_COMPOUNDS_IRON =
+    {
+        {"atp", InitialCompound(30,300)},
+        {"glucose", InitialCompound(10,30)},
+        {"ammonia", InitialCompound(30,100)},
+        {"phosphates", InitialCompound(0)},
+        {"hydrogensulfide", InitialCompound(0)},
+        {"oxytoxy", InitialCompound(0)},
+        {"iron", InitialCompound(30,300)}
     };
 
 string randomSpeciesName()
@@ -477,10 +491,19 @@ class Species{
         @forWorld = world;
 
         auto organelles = positionOrganelles(stringCode);
-
+        // If you have iron (f is the symbol for rusticyanin)
+        if (stringCode.findFirst('f') >= 0)
+        {
+        templateEntity = Species::createSpecies(forWorld, this.name, this.genus, this.epithet,
+            organelles, this.colour, this.isBacteria, this.speciesMembraneType,
+            DEFAULT_INITIAL_COMPOUNDS_IRON, this.aggression, this.fear, this.activity, this.focus);
+        }
+        else {
         templateEntity = Species::createSpecies(forWorld, this.name, this.genus, this.epithet,
             organelles, this.colour, this.isBacteria, this.speciesMembraneType,
             DEFAULT_INITIAL_COMPOUNDS, this.aggression, this.fear, this.activity, this.focus);
+        }
+
     }
 
     // Delete a species
@@ -703,7 +726,7 @@ class Species{
         // respiratory Proteins, or Oxy Toxy Producing Proteins, also pure cytoplasm
         // aswell for variety.
         //TODO when chemosynthesis is added add a protein for that aswell
-        switch(GetEngine().GetRandom().GetNumber(1,7))
+        switch(GetEngine().GetRandom().GetNumber(1,8))
         {
         case 1:
             stringCode = getOrganelleDefinition("protoplasm").gene;
@@ -722,6 +745,10 @@ class Species{
             break;
         case 6:
             stringCode = getOrganelleDefinition("nitrogenFixationProteins").gene;
+            break;
+        case 7:
+            stringCode = getOrganelleDefinition("rusticyanin").gene;
+            stringCode += getOrganelleDefinition("protoplasm").gene;
             break;
         default:
             stringCode = getOrganelleDefinition("protoplasm").gene;
