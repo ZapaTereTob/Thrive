@@ -21,7 +21,7 @@ enum class THRIVE_COMPONENT : uint16_t {
     ABSORBER,
     TIMED_LIFE,
     PROPERTIES,
-	COMPOUND_VENTER,
+    COMPOUND_VENTER,
 
     // TODO: check is this needed for anything
     // INVALID
