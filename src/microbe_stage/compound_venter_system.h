@@ -22,11 +22,18 @@ public:
 
     double storageSpace;
     double storageSpaceOccupied;
+    float x, y;
 
     REFERENCE_HANDLE_UNCOUNTED_TYPE(CompoundVenterComponent);
 
     static constexpr auto TYPE =
         componentTypeConvert(THRIVE_COMPONENT::COMPOUND_VENTER);
+
+    void
+        ventCompound(float x,
+            float y,
+            CompoundId ourCompound,
+            CellStageWorld& world);
 };
 
 class CompoundVenterSystem
@@ -65,7 +72,6 @@ public:
 
 protected:
 private:
-    int curBiomeId = 0;
     static constexpr double TIME_SCALING_FACTOR = 1000;
 };
 } // namespace thrive

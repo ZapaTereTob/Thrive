@@ -11,6 +11,29 @@
 #include "microbe_stage/compound_venter_system.h"
 #include "microbe_stage/process_system.h"
 
+#include "generated/cell_stage_world.h"
 #include <Entities/GameWorld.h>
 
 using namespace thrive;
+
+void
+    CompoundVenterSystem::Run(GameWorld& world)
+{
+    if(!world.GetNetworkSettings().IsAuthoritative)
+        return;
+
+    for(auto& value : CachedComponents.GetIndex()) {
+
+        CompoundBagComponent& bag = std::get<0>(*value.second);
+        CompoundVenterComponent& venter = std::get<1>(*value.second);
+    }
+}
+
+void
+    CompoundVenterComponent::ventCompound(float x,
+        float y,
+        CompoundId compound,
+        CellStageWorld& world)
+{
+    world.GetCompoundCloudSystem().addCloud(compound, 15000, Float3(x, 0, y));
+}
