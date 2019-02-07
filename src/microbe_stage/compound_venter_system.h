@@ -42,9 +42,10 @@ class CompoundVenterSystem
 public:
     /**
      * @brief Updates the system
+     * @todo Make it releases a specific amount of compounds each second
      */
     void
-        Run(GameWorld& world);
+        Run(CellStageWorld& world);
 
     void
         CreateNodes(
@@ -68,7 +69,7 @@ public:
                 firstdata,
             const std::vector<std::tuple<CompoundVenterComponent*, ObjectID>>&
                 seconddata,
-		    const std::vector<std::tuple<Leviathan::Position*, ObjectID>>&
+            const std::vector<std::tuple<Leviathan::Position*, ObjectID>>&
                 thirdData)
     {
         CachedComponents.RemoveBasedOnKeyTupleList(firstdata);

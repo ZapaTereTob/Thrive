@@ -17,7 +17,7 @@
 using namespace thrive;
 
 void
-    CompoundVenterSystem::Run(GameWorld& world)
+    CompoundVenterSystem::Run(CellStageWorld& world)
 {
     if(!world.GetNetworkSettings().IsAuthoritative)
         return;
@@ -27,6 +27,9 @@ void
         CompoundBagComponent& bag = std::get<0>(*value.second);
         CompoundVenterComponent& venter = std::get<1>(*value.second);
         Leviathan::Position& position = std::get<2>(*value.second);
+
+        venter.ventCompound(position,
+            SimulationParameters::compoundRegistry.getTypeId("iron"), world);
     }
 }
 
