@@ -30,15 +30,15 @@ public:
         componentTypeConvert(THRIVE_COMPONENT::COMPOUND_VENTER);
 
     void
-        ventCompound(float x,
-            float y,
+        ventCompound(Leviathan::Position& pos,
             CompoundId ourCompound,
             CellStageWorld& world);
 };
 
 class CompoundVenterSystem
-    : public Leviathan::System<
-          std::tuple<CompoundBagComponent&, CompoundVenterComponent&>> {
+    : public Leviathan::System<std::tuple<CompoundBagComponent&,
+          CompoundVenterComponent&,
+          Leviathan::Position&>> {
 public:
     /**
      * @brief Updates the system
@@ -52,11 +52,14 @@ public:
                 firstdata,
             const std::vector<std::tuple<CompoundVenterComponent*, ObjectID>>&
                 seconddata,
+            const std::vector<std::tuple<Leviathan::Position*, ObjectID>>&
+                thirdData,
             const ComponentHolder<CompoundBagComponent>& firstholder,
-            const ComponentHolder<CompoundVenterComponent>& secondholder)
+            const ComponentHolder<CompoundVenterComponent>& secondholder,
+            const ComponentHolder<Leviathan::Position>& thirdHolder)
     {
-        TupleCachedComponentCollectionHelper(
-            CachedComponents, firstdata, seconddata, firstholder, secondholder);
+        TupleCachedComponentCollectionHelper(CachedComponents, firstdata,
+            seconddata, thirdData, firstholder, secondholder, thirdHolder);
     }
 
     void

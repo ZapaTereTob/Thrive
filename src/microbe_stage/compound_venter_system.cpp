@@ -26,14 +26,15 @@ void
 
         CompoundBagComponent& bag = std::get<0>(*value.second);
         CompoundVenterComponent& venter = std::get<1>(*value.second);
+        Leviathan::Position& position = std::get<2>(*value.second);
     }
 }
 
 void
-    CompoundVenterComponent::ventCompound(float x,
-        float y,
+    CompoundVenterComponent::ventCompound(Leviathan::Position& pos,
         CompoundId compound,
         CellStageWorld& world)
 {
-    world.GetCompoundCloudSystem().addCloud(compound, 15000, Float3(x, 0, y));
+    world.GetCompoundCloudSystem().addCloud(
+        compound, 15000, pos.Members._Position);
 }
