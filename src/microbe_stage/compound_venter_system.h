@@ -67,10 +67,13 @@ public:
             const std::vector<std::tuple<CompoundBagComponent*, ObjectID>>&
                 firstdata,
             const std::vector<std::tuple<CompoundVenterComponent*, ObjectID>>&
-                seconddata)
+                seconddata,
+		    const std::vector<std::tuple<Leviathan::Position*, ObjectID>>&
+                thirdData)
     {
         CachedComponents.RemoveBasedOnKeyTupleList(firstdata);
         CachedComponents.RemoveBasedOnKeyTupleList(seconddata);
+        CachedComponents.RemoveBasedOnKeyTupleList(thirdData);
     }
 
 protected:
